@@ -17,6 +17,9 @@ export default {
 				'2xl': '1400px'
 			}
 		},
+		fontFamily: {
+			sans: ['Inter', 'sans-serif'],
+		},
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
@@ -25,16 +28,16 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: '#007BFF',
+					foreground: '#FFFFFF'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+					DEFAULT: '#FF4757',
+					foreground: '#FFFFFF'
 				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
@@ -51,6 +54,26 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				success: {
+					DEFAULT: '#2ED573',
+					foreground: '#FFFFFF'
+				},
+				warning: {
+					DEFAULT: '#FFA502',
+					foreground: '#FFFFFF'
+				},
+				info: {
+					DEFAULT: '#70A1FF',
+					foreground: '#FFFFFF'
+				},
+				light: {
+					DEFAULT: '#F5F7FA',
+					foreground: '#2F3542'
+				},
+				dark: {
+					DEFAULT: '#2F3542',
+					foreground: '#F5F7FA'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
