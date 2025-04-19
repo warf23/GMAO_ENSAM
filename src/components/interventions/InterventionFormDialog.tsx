@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DialogDescription } from '@/components/ui/dialog';
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,7 +23,12 @@ type Intervention = {
   technicians: string[];
 };
 
-export const InterventionFormDialog = ({ intervention }: { intervention?: Intervention }) => {
+interface InterventionFormDialogProps {
+  intervention?: Intervention;
+  onInterventionSaved?: () => void;
+}
+
+export const InterventionFormDialog = ({ intervention, onInterventionSaved }: InterventionFormDialogProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Intervention>({
     id: intervention?.id || crypto.randomUUID(),
@@ -66,8 +72,11 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
     // Save to localStorage
     localStorage.setItem('interventions', JSON.stringify(updatedInterventions));
     
-    // Refresh the page to show updated data
-    window.location.reload();
+    // Call callback to refresh the list
+    if (onInterventionSaved) {
+      onInterventionSaved();
+    }
+    
     setOpen(false);
   };
 
@@ -90,6 +99,9 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
           <DialogTitle>
             {intervention ? "Modifier l'intervention" : "Nouvelle intervention"}
           </DialogTitle>
+          <DialogDescription>
+            {intervention ? "Modifier les détails de l'intervention" : "Ajouter une nouvelle intervention de maintenance"}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid gap-4">

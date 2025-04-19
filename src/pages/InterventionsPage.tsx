@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   AlertCircle, Calendar, CheckCircle, ChevronsUpDown, 
@@ -19,6 +19,14 @@ import { format, isAfter, isBefore, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { InterventionFormDialog } from '@/components/interventions/InterventionFormDialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Types for interventions
 type InterventionStatus = 'completed' | 'in-progress' | 'scheduled' | 'canceled';
@@ -29,13 +37,13 @@ type Intervention = {
   title: string;
   description: string;
   equipmentId: string;
-  equipmentName: string;
+  equipmentName?: string;
   type: InterventionType;
   status: InterventionStatus;
   priority: 'low' | 'medium' | 'high' | 'critical';
   startDate: string;
   endDate: string | null;
-  duration: number | null; // in minutes
+  duration?: number | null; // in minutes
   technicians: string[];
   causesOfFailure?: string[];
   spareParts?: {
@@ -45,121 +53,162 @@ type Intervention = {
   }[];
 };
 
+// Mock equipment data for testing
+const mockEquipment = [
+  { id: 'eq001', name: 'Pompe centrifuge P-101' },
+  { id: 'eq002', name: 'Compresseur C-201' },
+  { id: 'eq003', name: 'Moteur électrique M-301' },
+];
+
 const InterventionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
   
-  // Mock data for interventions
-  const interventions: Intervention[] = [
-    {
-      id: 'int001',
-      title: 'Maintenance préventive trimestrielle',
-      description: 'Vérification complète et graissage',
-      equipmentId: 'eq001',
-      equipmentName: 'Pompe centrifuge P-101',
-      type: 'preventive',
-      status: 'scheduled',
-      priority: 'medium',
-      startDate: '2024-05-20T09:00:00',
-      endDate: null,
-      duration: 120,
-      technicians: ['Marie Dubois'],
-    },
-    {
-      id: 'int002',
-      title: 'Remplacement joints d\'étanchéité',
-      description: 'Fuites détectées au niveau des joints. Remplacement nécessaire.',
-      equipmentId: 'eq001',
-      equipmentName: 'Pompe centrifuge P-101',
-      type: 'corrective',
-      status: 'completed',
-      priority: 'high',
-      startDate: '2024-04-05T13:30:00',
-      endDate: '2024-04-05T15:45:00',
-      duration: 135,
-      technicians: ['Jean Dupont', 'Sarah Martin'],
-      causesOfFailure: ['Usure', 'Vibration excessive'],
-      spareParts: [
-        { id: 'sp001', name: 'Joint d\'étanchéité', quantity: 2 },
-        { id: 'sp002', name: 'Roulement à billes', quantity: 1 },
-      ],
-    },
-    {
-      id: 'int003',
-      title: 'Calibration capteurs de pression',
-      description: 'Calibration des capteurs de pression selon normes du fabricant',
-      equipmentId: 'eq002',
-      equipmentName: 'Compresseur C-201',
-      type: 'preventive',
-      status: 'completed',
-      priority: 'low',
-      startDate: '2024-04-15T10:00:00',
-      endDate: '2024-04-15T11:30:00',
-      duration: 90,
-      technicians: ['Pierre Lefebvre'],
-    },
-    {
-      id: 'int004',
-      title: 'Réparation système de refroidissement',
-      description: 'Surchauffe détectée. Vérification du circuit de refroidissement et réparation.',
-      equipmentId: 'eq002',
-      equipmentName: 'Compresseur C-201',
-      type: 'corrective',
-      status: 'in-progress',
-      priority: 'critical',
-      startDate: '2024-04-19T08:00:00',
-      endDate: null,
-      duration: null,
-      technicians: ['Jean Dupont', 'Marie Dubois'],
-      causesOfFailure: ['Fuite liquide refroidissement', 'Ventilateur défectueux'],
-      spareParts: [
-        { id: 'sp003', name: 'Ventilateur 120mm', quantity: 1 },
-        { id: 'sp004', name: 'Tuyau flexible 8mm', quantity: 2 },
-      ],
-    },
-    {
-      id: 'int005',
-      title: 'Maintenance préventive mensuelle',
-      description: 'Inspection visuelle et nettoyage',
-      equipmentId: 'eq003',
-      equipmentName: 'Moteur électrique M-301',
-      type: 'preventive',
-      status: 'scheduled',
-      priority: 'medium',
-      startDate: '2024-05-05T14:00:00',
-      endDate: null,
-      duration: 60,
-      technicians: ['Sarah Martin'],
-    },
-    {
-      id: 'int006',
-      title: 'Remplacement roulements',
-      description: 'Bruit anormal détecté. Remplacement des roulements usés.',
-      equipmentId: 'eq003',
-      equipmentName: 'Moteur électrique M-301',
-      type: 'corrective',
-      status: 'scheduled',
-      priority: 'high',
-      startDate: '2024-04-25T09:30:00',
-      endDate: null,
-      duration: 180,
-      technicians: ['Pierre Lefebvre', 'Jean Dupont'],
-      causesOfFailure: ['Usure des roulements'],
-      spareParts: [
-        { id: 'sp002', name: 'Roulement à billes', quantity: 2 },
-        { id: 'sp005', name: 'Graisse haute température', quantity: 1 },
-      ],
-    },
-  ];
+  // Load interventions from localStorage
+  const loadInterventions = () => {
+    // Get interventions from localStorage
+    const storedInterventions = localStorage.getItem('interventions');
+    
+    if (storedInterventions) {
+      let parsedInterventions = JSON.parse(storedInterventions);
+      
+      // Add equipment names to interventions if missing
+      parsedInterventions = parsedInterventions.map((intervention: Intervention) => {
+        if (!intervention.equipmentName) {
+          const equipment = mockEquipment.find(eq => eq.id === intervention.equipmentId);
+          return {
+            ...intervention,
+            equipmentName: equipment ? equipment.name : 'Équipement inconnu'
+          };
+        }
+        return intervention;
+      });
+      
+      setInterventions(parsedInterventions);
+    } else {
+      // Use mock data if no interventions in localStorage
+      const mockInterventions: Intervention[] = [
+        {
+          id: 'int001',
+          title: 'Maintenance préventive trimestrielle',
+          description: 'Vérification complète et graissage',
+          equipmentId: 'eq001',
+          equipmentName: 'Pompe centrifuge P-101',
+          type: 'preventive',
+          status: 'scheduled',
+          priority: 'medium',
+          startDate: '2024-05-20T09:00:00',
+          endDate: null,
+          duration: 120,
+          technicians: ['Marie Dubois'],
+        },
+        {
+          id: 'int002',
+          title: 'Remplacement joints d\'étanchéité',
+          description: 'Fuites détectées au niveau des joints. Remplacement nécessaire.',
+          equipmentId: 'eq001',
+          equipmentName: 'Pompe centrifuge P-101',
+          type: 'corrective',
+          status: 'completed',
+          priority: 'high',
+          startDate: '2024-04-05T13:30:00',
+          endDate: '2024-04-05T15:45:00',
+          duration: 135,
+          technicians: ['Jean Dupont', 'Sarah Martin'],
+          causesOfFailure: ['Usure', 'Vibration excessive'],
+          spareParts: [
+            { id: 'sp001', name: 'Joint d\'étanchéité', quantity: 2 },
+            { id: 'sp002', name: 'Roulement à billes', quantity: 1 },
+          ],
+        },
+        {
+          id: 'int003',
+          title: 'Calibration capteurs de pression',
+          description: 'Calibration des capteurs de pression selon normes du fabricant',
+          equipmentId: 'eq002',
+          equipmentName: 'Compresseur C-201',
+          type: 'preventive',
+          status: 'completed',
+          priority: 'low',
+          startDate: '2024-04-15T10:00:00',
+          endDate: '2024-04-15T11:30:00',
+          duration: 90,
+          technicians: ['Pierre Lefebvre'],
+        },
+        {
+          id: 'int004',
+          title: 'Réparation système de refroidissement',
+          description: 'Surchauffe détectée. Vérification du circuit de refroidissement et réparation.',
+          equipmentId: 'eq002',
+          equipmentName: 'Compresseur C-201',
+          type: 'corrective',
+          status: 'in-progress',
+          priority: 'critical',
+          startDate: '2024-04-19T08:00:00',
+          endDate: null,
+          duration: null,
+          technicians: ['Jean Dupont', 'Marie Dubois'],
+          causesOfFailure: ['Fuite liquide refroidissement', 'Ventilateur défectueux'],
+          spareParts: [
+            { id: 'sp003', name: 'Ventilateur 120mm', quantity: 1 },
+            { id: 'sp004', name: 'Tuyau flexible 8mm', quantity: 2 },
+          ],
+        },
+        {
+          id: 'int005',
+          title: 'Maintenance préventive mensuelle',
+          description: 'Inspection visuelle et nettoyage',
+          equipmentId: 'eq003',
+          equipmentName: 'Moteur électrique M-301',
+          type: 'preventive',
+          status: 'scheduled',
+          priority: 'medium',
+          startDate: '2024-05-05T14:00:00',
+          endDate: null,
+          duration: 60,
+          technicians: ['Sarah Martin'],
+        },
+        {
+          id: 'int006',
+          title: 'Remplacement roulements',
+          description: 'Bruit anormal détecté. Remplacement des roulements usés.',
+          equipmentId: 'eq003',
+          equipmentName: 'Moteur électrique M-301',
+          type: 'corrective',
+          status: 'scheduled',
+          priority: 'high',
+          startDate: '2024-04-25T09:30:00',
+          endDate: null,
+          duration: 180,
+          technicians: ['Pierre Lefebvre', 'Jean Dupont'],
+          causesOfFailure: ['Usure des roulements'],
+          spareParts: [
+            { id: 'sp002', name: 'Roulement à billes', quantity: 2 },
+            { id: 'sp005', name: 'Graisse haute température', quantity: 1 },
+          ],
+        },
+      ];
+      
+      // Save mock data to localStorage on first load
+      localStorage.setItem('interventions', JSON.stringify(mockInterventions));
+      setInterventions(mockInterventions);
+    }
+  };
+  
+  // Load interventions on component mount
+  useEffect(() => {
+    loadInterventions();
+  }, []);
   
   // Filter interventions based on search term and filters
   const filteredInterventions = interventions.filter((intervention) => {
     // Search term filter
     const matchesSearch = 
       intervention.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      intervention.equipmentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (intervention.equipmentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       intervention.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Type filter
@@ -296,7 +345,7 @@ const InterventionsPage = () => {
             <Calendar className="mr-2 h-4 w-4" />
             Vue calendrier
           </Button>
-          <InterventionFormDialog />
+          <InterventionFormDialog onInterventionSaved={loadInterventions} />
         </div>
       </div>
       
@@ -455,7 +504,10 @@ const InterventionsPage = () => {
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         )}
-                        <InterventionFormDialog intervention={intervention} />
+                        <InterventionFormDialog 
+                          intervention={intervention}
+                          onInterventionSaved={loadInterventions}
+                        />
                       </div>
                     </td>
                   </tr>
