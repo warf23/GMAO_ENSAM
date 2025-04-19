@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,8 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import EquipmentListPage from "./pages/EquipmentListPage";
 import EquipmentDetailPage from "./pages/EquipmentDetailPage";
+import InterventionsPage from "./pages/InterventionsPage";
+import InterventionDetailPage from "./pages/InterventionDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,7 +25,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/equipements" element={<EquipmentListPage />} />
             <Route path="/equipements/:id" element={<EquipmentDetailPage />} />
-            <Route path="/maintenance/interventions" element={<div className="p-6">Interventions de maintenance (à implémenter)</div>} />
+            <Route path="/maintenance/interventions" element={<InterventionsPage />} />
+            <Route path="/maintenance/interventions/:id" element={<InterventionDetailPage />} />
             <Route path="/maintenance/preventif" element={<div className="p-6">Planning de maintenance préventive (à implémenter)</div>} />
             <Route path="/calendrier" element={<div className="p-6">Calendrier des interventions (à implémenter)</div>} />
             <Route path="/pieces" element={<div className="p-6">Gestion des pièces détachées (à implémenter)</div>} />
