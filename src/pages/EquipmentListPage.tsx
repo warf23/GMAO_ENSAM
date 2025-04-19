@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -21,6 +20,7 @@ type Equipment = {
   nextMaintenance: Date | null;
   criticalityLevel: 'low' | 'medium' | 'high';
 };
+import { EquipmentFormDialog } from '@/components/equipment/EquipmentFormDialog';
 
 const EquipmentListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,10 +159,7 @@ const EquipmentListPage = () => {
             <Filter className="mr-2 h-4 w-4" />
             Filtres
           </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvel équipement
-          </Button>
+          <EquipmentFormDialog />
         </div>
       </div>
       
@@ -223,9 +220,7 @@ const EquipmentListPage = () => {
                         <Button variant="ghost" size="icon">
                           <Wrench className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon">
-                          <Settings className="h-4 w-4" />
-                        </Button>
+                        <EquipmentFormDialog equipment={equipment} />
                       </div>
                     </td>
                   </tr>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -19,6 +18,7 @@ import {
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { InterventionFormDialog } from '@/components/interventions/InterventionFormDialog';
 
 // Types for interventions
 type InterventionStatus = 'completed' | 'in-progress' | 'scheduled' | 'canceled';
@@ -296,10 +296,7 @@ const InterventionsPage = () => {
             <Calendar className="mr-2 h-4 w-4" />
             Vue calendrier
           </Button>
-          <Button onClick={handleCreateIntervention}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle intervention
-          </Button>
+          <InterventionFormDialog />
         </div>
       </div>
       
@@ -458,6 +455,7 @@ const InterventionsPage = () => {
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         )}
+                        <InterventionFormDialog intervention={intervention} />
                       </div>
                     </td>
                   </tr>
