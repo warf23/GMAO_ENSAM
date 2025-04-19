@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   AlertCircle, ArrowUpDown, CheckCircle, ChevronsUpDown, 
-  Filter, Plus, Search, Settings, Wrench
+  Filter, Search, Wrench
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,77 +17,30 @@ type Equipment = {
   status: 'operational' | 'maintenance' | 'breakdown' | 'standby';
   type: string;
   serialNumber: string;
-  nextMaintenance: Date | null;
   criticalityLevel: 'low' | 'medium' | 'high';
 };
 import { EquipmentFormDialog } from '@/components/equipment/EquipmentFormDialog';
 
 const EquipmentListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [equipments, setEquipments] = useState<Equipment[]>([]);
   
-  // Mock data
-  const equipments: Equipment[] = [
-    {
-      id: 'eq001',
-      name: 'Pompe centrifuge P-101',
-      location: 'Unité A / Zone 1',
-      status: 'operational',
-      type: 'Pompe',
-      serialNumber: 'SN-PC101-2023',
-      nextMaintenance: new Date('2024-04-15'),
-      criticalityLevel: 'high',
-    },
-    {
-      id: 'eq002',
-      name: 'Compresseur C-201',
-      location: 'Unité B / Zone 2',
-      status: 'maintenance',
-      type: 'Compresseur',
-      serialNumber: 'SN-CC201-2022',
-      nextMaintenance: new Date('2024-04-10'),
-      criticalityLevel: 'high',
-    },
-    {
-      id: 'eq003',
-      name: 'Moteur électrique M-301',
-      location: 'Unité A / Zone 3',
-      status: 'operational',
-      type: 'Moteur',
-      serialNumber: 'SN-ME301-2023',
-      nextMaintenance: new Date('2024-05-20'),
-      criticalityLevel: 'medium',
-    },
-    {
-      id: 'eq004',
-      name: 'Échangeur de chaleur E-401',
-      location: 'Unité C / Zone 1',
-      status: 'breakdown',
-      type: 'Échangeur',
-      serialNumber: 'SN-EC401-2021',
-      nextMaintenance: null,
-      criticalityLevel: 'high',
-    },
-    {
-      id: 'eq005',
-      name: 'Vanne V-501',
-      location: 'Unité B / Zone 3',
-      status: 'operational',
-      type: 'Vanne',
-      serialNumber: 'SN-VA501-2023',
-      nextMaintenance: new Date('2024-06-05'),
-      criticalityLevel: 'low',
-    },
-    {
-      id: 'eq006',
-      name: 'Filtre F-601',
-      location: 'Unité C / Zone 2',
-      status: 'standby',
-      type: 'Filtre',
-      serialNumber: 'SN-FI601-2022',
-      nextMaintenance: new Date('2024-05-15'),
-      criticalityLevel: 'medium',
-    },
-  ];
+  // Load equipment from localStorage
+  const loadEquipment = () => {
+    try {
+      const storedEquipment = localStorage.getItem('equipment');
+      if (storedEquipment) {
+        setEquipments(JSON.parse(storedEquipment));
+      }
+    } catch (error) {
+      console.error('Error loading equipment from localStorage:', error);
+    }
+  };
+  
+  // Load equipment on component mount
+  useEffect(() => {
+    loadEquipment();
+  }, []);
   
   const filteredEquipments = equipments.filter((equipment) => 
     equipment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,7 +112,7 @@ const EquipmentListPage = () => {
             <Filter className="mr-2 h-4 w-4" />
             Filtres
           </Button>
-          <EquipmentFormDialog />
+          <EquipmentFormDialog onEquipmentAdded={loadEquipment} />
         </div>
       </div>
       
@@ -203,37 +156,39 @@ const EquipmentListPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredEquipments.map((equipment) => (
-                  <tr key={equipment.id} className="border-b hover:bg-muted/30">
-                    <td className="py-3 px-6">
-                      <Link to={`/equipements/${equipment.id}`} className="font-medium text-primary hover:underline">
-                        {equipment.name}
-                      </Link>
-                    </td>
-                    <td className="py-3 px-6 hidden md:table-cell">{equipment.type}</td>
-                    <td className="py-3 px-6 hidden lg:table-cell text-sm">{equipment.location}</td>
-                    <td className="py-3 px-6">{getStatusBadge(equipment.status)}</td>
-                    <td className="py-3 px-6 hidden lg:table-cell">{getCriticalityBadge(equipment.criticalityLevel)}</td>
-                    <td className="py-3 px-6 text-sm text-muted-foreground hidden md:table-cell">{equipment.serialNumber}</td>
-                    <td className="py-3 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Wrench className="h-4 w-4" />
-                        </Button>
-                        <EquipmentFormDialog equipment={equipment} />
-                      </div>
+                {filteredEquipments.length > 0 ? (
+                  filteredEquipments.map((equipment) => (
+                    <tr key={equipment.id} className="border-b hover:bg-muted/30">
+                      <td className="py-3 px-6">
+                        <Link to={`/equipements/${equipment.id}`} className="font-medium text-primary hover:underline">
+                          {equipment.name}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-6 hidden md:table-cell">{equipment.type}</td>
+                      <td className="py-3 px-6 hidden lg:table-cell text-sm">{equipment.location}</td>
+                      <td className="py-3 px-6">{getStatusBadge(equipment.status)}</td>
+                      <td className="py-3 px-6 hidden lg:table-cell">{getCriticalityBadge(equipment.criticalityLevel)}</td>
+                      <td className="py-3 px-6 text-sm text-muted-foreground hidden md:table-cell">{equipment.serialNumber}</td>
+                      <td className="py-3 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon">
+                            <Wrench className="h-4 w-4" />
+                          </Button>
+                          <EquipmentFormDialog equipment={equipment} onEquipmentAdded={loadEquipment} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center">
+                      <p className="text-muted-foreground">Aucun équipement trouvé</p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
-          
-          {filteredEquipments.length === 0 && (
-            <div className="py-8 text-center">
-              <p className="text-muted-foreground">Aucun équipement trouvé</p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

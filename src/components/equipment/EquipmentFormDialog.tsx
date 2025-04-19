@@ -18,7 +18,10 @@ type Equipment = {
   criticalityLevel: 'low' | 'medium' | 'high';
 };
 
-export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) => {
+export const EquipmentFormDialog = ({ equipment, onEquipmentAdded }: { 
+  equipment?: Equipment; 
+  onEquipmentAdded?: () => void;
+}) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Equipment>({
     id: equipment?.id || crypto.randomUUID(),
@@ -59,8 +62,11 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
     // Save to localStorage
     localStorage.setItem('equipment', JSON.stringify(updatedEquipment));
     
-    // Refresh the page to show updated data
-    window.location.reload();
+    // Call the callback to refresh the list instead of reloading the page
+    if (onEquipmentAdded) {
+      onEquipmentAdded();
+    }
+    
     setOpen(false);
   };
 
