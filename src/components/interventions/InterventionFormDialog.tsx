@@ -24,12 +24,50 @@ type Intervention = {
 
 export const InterventionFormDialog = ({ intervention }: { intervention?: Intervention }) => {
   const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState<Intervention>({
+    id: intervention?.id || crypto.randomUUID(),
+    title: intervention?.title || '',
+    description: intervention?.description || '',
+    equipmentId: intervention?.equipmentId || '',
+    type: intervention?.type || 'preventive',
+    status: intervention?.status || 'scheduled',
+    priority: intervention?.priority || 'medium',
+    startDate: intervention?.startDate || '',
+    endDate: intervention?.endDate || null,
+    technicians: intervention?.technicians || [],
+  });
+
+  const handleChange = (field: keyof Intervention, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(intervention ? "Intervention modifiée" : "Intervention créée", {
-      description: "Cette fonctionnalité sera bientôt disponible."
-    });
+    
+    // Get existing interventions from localStorage
+    const existingInterventions = JSON.parse(localStorage.getItem('interventions') || '[]');
+    
+    let updatedInterventions;
+    if (intervention) {
+      // Update existing intervention
+      updatedInterventions = existingInterventions.map((int: Intervention) => 
+        int.id === intervention.id ? formData : int
+      );
+      toast.success("Intervention modifiée");
+    } else {
+      // Add new intervention
+      updatedInterventions = [...existingInterventions, formData];
+      toast.success("Intervention créée");
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('interventions', JSON.stringify(updatedInterventions));
+    
+    // Refresh the page to show updated data
+    window.location.reload();
     setOpen(false);
   };
 
@@ -59,7 +97,8 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
               <Label htmlFor="title">Titre</Label>
               <Input
                 id="title"
-                defaultValue={intervention?.title}
+                value={formData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
                 placeholder="Ex: Maintenance préventive trimestrielle"
                 required
               />
@@ -69,7 +108,8 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                defaultValue={intervention?.description}
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
                 placeholder="Description détaillée de l'intervention..."
                 required
               />
@@ -77,7 +117,10 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
             
             <div className="grid gap-2">
               <Label htmlFor="type">Type</Label>
-              <Select defaultValue={intervention?.type || "preventive"}>
+              <Select 
+                value={formData.type}
+                onValueChange={(value) => handleChange('type', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un type" />
                 </SelectTrigger>
@@ -90,7 +133,10 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
             
             <div className="grid gap-2">
               <Label htmlFor="priority">Priorité</Label>
-              <Select defaultValue={intervention?.priority || "medium"}>
+              <Select 
+                value={formData.priority}
+                onValueChange={(value) => handleChange('priority', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une priorité" />
                 </SelectTrigger>
@@ -108,7 +154,8 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
               <Input
                 id="startDate"
                 type="datetime-local"
-                defaultValue={intervention?.startDate}
+                value={formData.startDate}
+                onChange={(e) => handleChange('startDate', e.target.value)}
                 required
               />
             </div>
@@ -119,7 +166,8 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
                 <Input
                   id="endDate"
                   type="datetime-local"
-                  defaultValue={intervention?.endDate || undefined}
+                  value={formData.endDate || ''}
+                  onChange={(e) => handleChange('endDate', e.target.value)}
                 />
               </div>
             )}
@@ -128,7 +176,8 @@ export const InterventionFormDialog = ({ intervention }: { intervention?: Interv
               <Label htmlFor="technicians">Techniciens</Label>
               <Input
                 id="technicians"
-                defaultValue={intervention?.technicians.join(', ')}
+                value={formData.technicians.join(', ')}
+                onChange={(e) => handleChange('technicians', e.target.value.split(',').map(t => t.trim()))}
                 placeholder="Noms des techniciens (séparés par des virgules)"
                 required
               />

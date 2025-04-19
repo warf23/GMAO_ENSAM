@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,47 @@ type Equipment = {
 
 export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) => {
   const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState<Equipment>({
+    id: equipment?.id || crypto.randomUUID(),
+    name: equipment?.name || '',
+    location: equipment?.location || '',
+    status: equipment?.status || 'operational',
+    type: equipment?.type || '',
+    serialNumber: equipment?.serialNumber || '',
+    criticalityLevel: equipment?.criticalityLevel || 'low',
+  });
+
+  const handleChange = (field: keyof Equipment, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(equipment ? "Équipement modifié" : "Équipement créé", {
-      description: "Cette fonctionnalité sera bientôt disponible."
-    });
+    
+    // Get existing equipment from localStorage
+    const existingEquipment = JSON.parse(localStorage.getItem('equipment') || '[]');
+    
+    let updatedEquipment;
+    if (equipment) {
+      // Update existing equipment
+      updatedEquipment = existingEquipment.map((eq: Equipment) => 
+        eq.id === equipment.id ? formData : eq
+      );
+      toast.success("Équipement modifié");
+    } else {
+      // Add new equipment
+      updatedEquipment = [...existingEquipment, formData];
+      toast.success("Équipement créé");
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('equipment', JSON.stringify(updatedEquipment));
+    
+    // Refresh the page to show updated data
+    window.location.reload();
     setOpen(false);
   };
 
@@ -55,7 +90,8 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
               <Label htmlFor="name">Nom de l'équipement</Label>
               <Input
                 id="name"
-                defaultValue={equipment?.name}
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="Ex: Pompe centrifuge P-101"
                 required
               />
@@ -65,7 +101,8 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
               <Label htmlFor="type">Type</Label>
               <Input
                 id="type"
-                defaultValue={equipment?.type}
+                value={formData.type}
+                onChange={(e) => handleChange('type', e.target.value)}
                 placeholder="Ex: Pompe"
                 required
               />
@@ -75,7 +112,8 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
               <Label htmlFor="location">Localisation</Label>
               <Input
                 id="location"
-                defaultValue={equipment?.location}
+                value={formData.location}
+                onChange={(e) => handleChange('location', e.target.value)}
                 placeholder="Ex: Unité A / Zone 1"
                 required
               />
@@ -85,7 +123,8 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
               <Label htmlFor="serialNumber">Numéro de série</Label>
               <Input
                 id="serialNumber"
-                defaultValue={equipment?.serialNumber}
+                value={formData.serialNumber}
+                onChange={(e) => handleChange('serialNumber', e.target.value)}
                 placeholder="Ex: SN-XXXX-2024"
                 required
               />
@@ -93,7 +132,10 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
             
             <div className="grid gap-2">
               <Label htmlFor="status">État</Label>
-              <Select defaultValue={equipment?.status || "operational"}>
+              <Select 
+                value={formData.status}
+                onValueChange={(value) => handleChange('status', value as Equipment['status'])}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un état" />
                 </SelectTrigger>
@@ -108,7 +150,10 @@ export const EquipmentFormDialog = ({ equipment }: { equipment?: Equipment }) =>
             
             <div className="grid gap-2">
               <Label htmlFor="criticalityLevel">Niveau de criticité</Label>
-              <Select defaultValue={equipment?.criticalityLevel || "low"}>
+              <Select 
+                value={formData.criticalityLevel}
+                onValueChange={(value) => handleChange('criticalityLevel', value as Equipment['criticalityLevel'])}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un niveau" />
                 </SelectTrigger>
