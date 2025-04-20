@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { Activity, Calendar, Clock, Package, Settings, Wrench } from 'lucide-react';
+import { Activity, Clock, Package, Settings, Wrench } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ParetoChart } from '@/components/dashboard/ParetoChart';
 import { MaintenanceCalendar } from '@/components/dashboard/MaintenanceCalendar';
@@ -16,14 +15,11 @@ import {
   getDashboardStats
 } from '@/utils/dataUtils';
 
-// Types from mockData module
-import type { MaintenanceEvent } from '@/utils/mockData';
-
 const Dashboard = () => {
   const [tabValue, setTabValue] = useState("today");
-  const [maintenanceEvents, setMaintenanceEvents] = useState<MaintenanceEvent[]>([]);
-  const [paretoData, setParetoData] = useState<any[]>([]);
-  const [metrics, setMetrics] = useState<any>({});
+  const [maintenanceEvents, setMaintenanceEvents] = useState([]);
+  const [paretoData, setParetoData] = useState([]);
+  const [metrics, setMetrics] = useState({});
   const [stats, setStats] = useState(getDashboardStats());
 
   useEffect(() => {
@@ -43,28 +39,29 @@ const Dashboard = () => {
     };
 
     refreshData();
-    
-    // Set up data refresh interval
-    const refreshInterval = setInterval(refreshData, 5000); // Refresh every 5 seconds
-    
-    return () => {
-      clearInterval(refreshInterval);
-    };
+    const refreshInterval = setInterval(refreshData, 5000);
+    return () => clearInterval(refreshInterval);
   }, []);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight text-primary">Tableau de bord</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">Dernière mise à jour: {formatDistanceToNow(new Date(), { addSuffix: true, locale: fr })}</span>
+        </div>
+      </div>
       
-      <Tabs defaultValue="today" onValueChange={setTabValue}>
-        <TabsList>
+      <Tabs defaultValue="today" onValueChange={setTabValue} className="space-y-8">
+        <TabsList className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <TabsTrigger value="today">Aujourd'hui</TabsTrigger>
           <TabsTrigger value="week">Cette semaine</TabsTrigger>
           <TabsTrigger value="month">Ce mois</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="today" className="space-y-6">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <TabsContent value="today" className="space-y-8">
+          {/* Stats Cards Grid */}
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Interventions en cours"
               value={String(stats.activeInterventions)}
@@ -72,7 +69,7 @@ const Dashboard = () => {
               icon={Activity}
               trend="up"
               trendValue="+2 aujourd'hui"
-              iconClassName="bg-primary/10 text-primary"
+              iconClassName="bg-blue-500/10 text-blue-500"
             />
             <StatCard
               title="En attente"
@@ -81,7 +78,7 @@ const Dashboard = () => {
               icon={Clock}
               trend="neutral"
               trendValue="inchangé"
-              iconClassName="bg-warning/10 text-warning"
+              iconClassName="bg-orange-500/10 text-orange-500"
             />
             <StatCard
               title="Equipements en panne"
@@ -90,7 +87,7 @@ const Dashboard = () => {
               icon={Settings}
               trend="down"
               trendValue="-1 depuis hier"
-              iconClassName="bg-destructive/10 text-destructive"
+              iconClassName="bg-red-500/10 text-red-500"
             />
             <StatCard
               title="Stock critique"
@@ -99,13 +96,69 @@ const Dashboard = () => {
               icon={Package}
               trend="up"
               trendValue="+1 aujourd'hui"
-              iconClassName="bg-warning/10 text-warning"
+              iconClassName="bg-purple-500/10 text-purple-500"
             />
           </div>
+
+          {/* Calendar and Recent Interventions */}
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+            <Card className="col-span-1 lg:col-span-2 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold">Calendrier des interventions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MaintenanceCalendar events={maintenanceEvents} />
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Wrench size={18} />
+                  Dernières interventions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {maintenanceEvents.slice(0, 3).map((event) => (
+                    <div key={event.id} className="flex items-start space-x-3 pb-3 border-b last:border-b-0 last:pb-0">
+                      <div className={`h-9 w-9 rounded-full flex items-center justify-center ${
+                        event.status === 'completed' ? 'bg-green-500/10 text-green-500' : 
+                        event.status === 'overdue' ? 'bg-red-500/10 text-red-500' : 
+                        'bg-blue-500/10 text-blue-500'
+                      }`}>
+                        {event.type === 'preventive' ? <Settings size={16} /> : <Wrench size={16} />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{event.title}</p>
+                            <p className="text-xs text-muted-foreground">{event.equipmentName}</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(event.date), { addSuffix: true, locale: fr })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold">Analyse des pannes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ParetoChart data={paretoData} title="" height={300} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
-        
-        {/* The other tabs would use different data */}
-        <TabsContent value="week" className="space-y-6">
+
+        {/* Week and Month tabs content - similar structure to Today */}
+        <TabsContent value="week" className="space-y-8">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Interventions totales"
@@ -146,7 +199,7 @@ const Dashboard = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="month" className="space-y-6">
+        <TabsContent value="month" className="space-y-8">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Interventions totales"
@@ -187,79 +240,6 @@ const Dashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
-      
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <MaintenanceCalendar events={maintenanceEvents} />
-        
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Wrench size={18} />
-                Dernières interventions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {maintenanceEvents.slice(0, 3).map((event) => (
-                  <div key={event.id} className="flex items-start space-x-3 pb-3 border-b last:border-b-0 last:pb-0">
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center ${
-                      event.status === 'completed' ? 'bg-success/10 text-success' : 
-                      event.status === 'overdue' ? 'bg-destructive/10 text-destructive' : 
-                      'bg-primary/10 text-primary'
-                    }`}>
-                      {event.type === 'preventive' ? <Settings size={16} /> : <Wrench size={16} />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{event.title}</p>
-                          <p className="text-xs text-muted-foreground">{event.equipmentName}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(event.date), { addSuffix: true, locale: fr })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <ParetoChart data={paretoData} title="Analyse Pareto des causes de pannes" height={300} />
-        </div>
-        <div className="space-y-6">
-          <PerformanceIndicator 
-            title="TRS (Taux de rendement synthétique)" 
-            value={metrics.trs || 0} 
-            target={85}
-            unit="%"
-            description="Disponibilité × Performance × Qualité"
-            status={(metrics.trs || 0) >= 85 ? 'success' : 'warning'}
-          />
-          <PerformanceIndicator 
-            title="MTBF (Temps moyen entre pannes)" 
-            value={metrics.mtbf || 0} 
-            target={150}
-            unit="heures"
-            description="Fiabilité des équipements"
-            status={(metrics.mtbf || 0) >= 150 ? 'success' : 'warning'}
-          />
-          <PerformanceIndicator 
-            title="MTTR (Temps moyen de réparation)" 
-            value={metrics.mttr || 0} 
-            target={3}
-            unit="heures"
-            description="Durée moyenne des interventions"
-            status={(metrics.mttr || 0) <= 3 ? 'success' : 'warning'}
-          />
-        </div>
-      </div>
     </div>
   );
 };
