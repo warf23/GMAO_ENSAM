@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Activity, Calendar, Clock, Package, Settings, Wrench } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ParetoChart } from '@/components/dashboard/ParetoChart';
@@ -7,8 +6,14 @@ import { MaintenanceCalendar } from '@/components/dashboard/MaintenanceCalendar'
 import { PerformanceIndicator } from '@/components/dashboard/PerformanceIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { addDays, formatDistanceToNow, subDays } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { 
+  initializeMockData, 
+  setupMockDataUpdates, 
+  generateParetoCauses,
+  generatePerformanceMetrics 
+} from '@/utils/mockData';
 
 // Types
 type MaintenanceEvent = {
@@ -21,57 +26,42 @@ type MaintenanceEvent = {
   type: 'preventive' | 'corrective';
 };
 
-// Mock data
-const paretoData = [
-  { name: 'Panne électrique', value: 35 },
-  { name: 'Usure mécanique', value: 25 },
-  { name: 'Défaut lubrification', value: 18 },
-  { name: 'Erreur opérateur', value: 12 },
-  { name: 'Problème hydraulique', value: 8 },
-  { name: 'Autres', value: 5 },
-];
-
-const maintenanceEvents: MaintenanceEvent[] = [
-  {
-    id: '1',
-    title: 'Maintenance préventive',
-    date: addDays(new Date(), 2),
-    equipmentId: 'EQ001',
-    equipmentName: 'Pompe P-101',
-    status: 'planned',
-    type: 'preventive',
-  },
-  {
-    id: '2',
-    title: 'Remplacement roulement',
-    date: new Date(),
-    equipmentId: 'EQ002',
-    equipmentName: 'Compresseur C-201',
-    status: 'planned',
-    type: 'preventive',
-  },
-  {
-    id: '3',
-    title: 'Réparation fuite',
-    date: subDays(new Date(), 1),
-    equipmentId: 'EQ003',
-    equipmentName: 'Cuve T-301',
-    status: 'completed',
-    type: 'corrective',
-  },
-  {
-    id: '4',
-    title: 'Inspection programmée',
-    date: subDays(new Date(), 3),
-    equipmentId: 'EQ004',
-    equipmentName: 'Échangeur E-401',
-    status: 'overdue',
-    type: 'preventive',
-  },
-];
-
 const Dashboard = () => {
   const [tabValue, setTabValue] = useState("today");
+  const [maintenanceEvents, setMaintenanceEvents] = useState<MaintenanceEvent[]>([]);
+  const [paretoData, setParetoData] = useState(generateParetoCauses());
+  const [metrics, setMetrics] = useState(generatePerformanceMetrics());
+
+  useEffect(() => {
+    // Initialize mock data if needed
+    initializeMockData();
+
+    // Set up periodic updates
+    const cleanup = setupMockDataUpdates();
+
+    // Set up data refresh interval
+    const refreshInterval = setInterval(() => {
+      const storedEquipment = JSON.parse(localStorage.getItem('equipment') || '[]');
+      const storedInterventions = JSON.parse(localStorage.getItem('interventions') || '[]');
+      const storedParetoCauses = JSON.parse(localStorage.getItem('paretoCauses') || '[]');
+      const storedMetrics = JSON.parse(localStorage.getItem('performanceMetrics') || '{}');
+
+      setMaintenanceEvents(storedInterventions);
+      setParetoData(storedParetoCauses);
+      setMetrics(storedMetrics);
+    }, 5000); // Refresh every 5 seconds
+
+    return () => {
+      cleanup();
+      clearInterval(refreshInterval);
+    };
+  }, []);
+
+  // Count active interventions based on status
+  const activeInterventions = maintenanceEvents.filter(e => e.status !== 'completed').length;
+  const plannedInterventions = maintenanceEvents.filter(e => e.status === 'planned').length;
+  const equipment = JSON.parse(localStorage.getItem('equipment') || '[]');
+  const breakdownCount = equipment.filter((e: any) => e.status === 'breakdown').length;
   
   return (
     <div className="space-y-6">
@@ -88,8 +78,8 @@ const Dashboard = () => {
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Interventions en cours"
-              value="5"
-              description="2 préventives, 3 correctives"
+              value={String(activeInterventions)}
+              description={`${maintenanceEvents.filter(e => e.type === 'preventive').length} préventives, ${maintenanceEvents.filter(e => e.type === 'corrective').length} correctives`}
               icon={Activity}
               trend="up"
               trendValue="+2 aujourd'hui"
@@ -97,7 +87,7 @@ const Dashboard = () => {
             />
             <StatCard
               title="En attente"
-              value="3"
+              value={String(plannedInterventions)}
               description="Interventions planifiées"
               icon={Clock}
               trend="neutral"
@@ -106,8 +96,8 @@ const Dashboard = () => {
             />
             <StatCard
               title="Equipements en panne"
-              value="2"
-              description="Sur 42 équipements"
+              value={String(breakdownCount)}
+              description={`Sur ${equipment.length} équipements`}
               icon={Settings}
               trend="down"
               trendValue="-1 depuis hier"
@@ -257,27 +247,27 @@ const Dashboard = () => {
         <div className="space-y-6">
           <PerformanceIndicator 
             title="TRS (Taux de rendement synthétique)" 
-            value={78.5} 
+            value={metrics.trs} 
             target={85}
             unit="%"
             description="Disponibilité × Performance × Qualité"
-            status="warning"
+            status={metrics.trs >= 85 ? 'success' : 'warning'}
           />
           <PerformanceIndicator 
             title="MTBF (Temps moyen entre pannes)" 
-            value={124} 
+            value={metrics.mtbf} 
             target={150}
             unit="heures"
             description="Fiabilité des équipements"
-            status="warning"
+            status={metrics.mtbf >= 150 ? 'success' : 'warning'}
           />
           <PerformanceIndicator 
             title="MTTR (Temps moyen de réparation)" 
-            value={2.3} 
+            value={metrics.mttr} 
             target={3}
             unit="heures"
             description="Durée moyenne des interventions"
-            status="success"
+            status={metrics.mttr <= 3 ? 'success' : 'warning'}
           />
         </div>
       </div>
