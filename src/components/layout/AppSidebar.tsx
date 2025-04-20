@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
-  BarChart3, Calendar, Cog, Home, Menu, Package, 
-  Wrench, X, ChevronDown, Users, FileText, Settings
+  BarChart3, Box, Calendar, Package, 
+  Settings, Wrench, X, ChevronDown, 
+  LayoutDashboard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -76,10 +76,10 @@ export const AppSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const sidebarItems = [
-    { title: "Tableau de bord", icon: Home, path: "/" },
+    { title: "Tableau de bord", icon: LayoutDashboard, path: "/" },
     { 
       title: "Équipements", 
-      icon: Settings, 
+      icon: Box, 
       path: "/equipements",
       hasSubItems: true,
       subItems: [
@@ -93,16 +93,13 @@ export const AppSidebar = () => {
       path: "/maintenance",
       hasSubItems: true,
       subItems: [
-        { title: "Interventions", path: "/maintenance/interventions" },
-        { title: "Préventif", path: "/maintenance/preventif" }
+        { title: "Interventions correctives", path: "/maintenance/interventions" },
+        { title: "Maintenance préventive", path: "/maintenance/preventif" }
       ]
     },
-    { title: "Calendrier", icon: Calendar, path: "/calendrier" },
+    { title: "Planning", icon: Calendar, path: "/calendrier" },
     { title: "Pièces détachées", icon: Package, path: "/pieces" },
-    { title: "Statistiques", icon: BarChart3, path: "/statistiques" },
-    { title: "Utilisateurs", icon: Users, path: "/utilisateurs" },
-    { title: "Rapports", icon: FileText, path: "/rapports" },
-    { title: "Paramètres", icon: Cog, path: "/parametres" }
+    { title: "Indicateurs", icon: BarChart3, path: "/statistiques" }
   ];
 
   return (
@@ -120,7 +117,7 @@ export const AppSidebar = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent"
         >
-          {isCollapsed ? <Menu size={20} /> : <X size={20} />}
+          {isCollapsed ? <Settings size={20} /> : <X size={20} />}
         </button>
       </div>
       

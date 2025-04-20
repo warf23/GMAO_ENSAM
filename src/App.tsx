@@ -31,9 +31,6 @@ const App = () => (
             <Route path="/calendrier" element={<div className="p-6">Calendrier des interventions (à implémenter)</div>} />
             <Route path="/pieces" element={<div className="p-6">Gestion des pièces détachées (à implémenter)</div>} />
             <Route path="/statistiques" element={<div className="p-6">Statistiques et indicateurs (à implémenter)</div>} />
-            <Route path="/utilisateurs" element={<div className="p-6">Gestion des utilisateurs (à implémenter)</div>} />
-            <Route path="/rapports" element={<div className="p-6">Rapports (à implémenter)</div>} />
-            <Route path="/parametres" element={<div className="p-6">Paramètres du système (à implémenter)</div>} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
