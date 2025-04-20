@@ -10,6 +10,7 @@ import EquipmentListPage from "./pages/EquipmentListPage";
 import EquipmentDetailPage from "./pages/EquipmentDetailPage";
 import InterventionsPage from "./pages/InterventionsPage";
 import InterventionDetailPage from "./pages/InterventionDetailPage";
+import SparePartsPage from "./pages/SparePartsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +30,7 @@ const App = () => (
             <Route path="/maintenance/interventions/:id" element={<InterventionDetailPage />} />
             <Route path="/maintenance/preventif" element={<div className="p-6">Planning de maintenance préventive (à implémenter)</div>} />
             <Route path="/calendrier" element={<div className="p-6">Calendrier des interventions (à implémenter)</div>} />
-            <Route path="/pieces" element={<div className="p-6">Gestion des pièces détachées (à implémenter)</div>} />
+            <Route path="/pieces" element={<SparePartsPage />} />
             <Route path="/statistiques" element={<div className="p-6">Statistiques et indicateurs (à implémenter)</div>} />
           </Route>
           <Route path="*" element={<NotFound />} />
