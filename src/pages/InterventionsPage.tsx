@@ -73,21 +73,49 @@ const InterventionsPage = () => {
     const storedInterventions = localStorage.getItem('interventions');
     
     if (storedInterventions) {
-      let parsedInterventions = JSON.parse(storedInterventions);
-      
-      // Add equipment names to interventions if missing
-      parsedInterventions = parsedInterventions.map((intervention: Intervention) => {
-        if (!intervention.equipmentName) {
-          const equipment = mockEquipment.find(eq => eq.id === intervention.equipmentId);
-          return {
-            ...intervention,
-            equipmentName: equipment ? equipment.name : 'Équipement inconnu'
-          };
+      try {
+        let parsedInterventions = JSON.parse(storedInterventions);
+        
+        // If the data is from the mock generator, it might have a different structure
+        // Transform if needed to match our Intervention type
+        if (Array.isArray(parsedInterventions) && parsedInterventions.length > 0) {
+          if ('date' in parsedInterventions[0] && !('startDate' in parsedInterventions[0])) {
+            // Format from mock data to our app format
+            parsedInterventions = parsedInterventions.map((item: any) => ({
+              id: item.id,
+              title: item.title,
+              description: item.title, // Use title as description if not available
+              equipmentId: item.equipmentId,
+              equipmentName: item.equipmentName,
+              type: item.type,
+              status: item.status === 'planned' ? 'scheduled' : 
+                     item.status === 'overdue' ? 'scheduled' : item.status,
+              priority: 'medium', // Default priority if not available
+              startDate: item.date, // Use date as startDate
+              endDate: null,
+              duration: 60, // Default duration
+              technicians: ['Technicien assigné'], // Default technician
+            }));
+          }
         }
-        return intervention;
-      });
-      
-      setInterventions(parsedInterventions);
+        
+        // Add equipment names to interventions if missing
+        parsedInterventions = parsedInterventions.map((intervention: Intervention) => {
+          if (!intervention.equipmentName) {
+            const equipment = mockEquipment.find(eq => eq.id === intervention.equipmentId);
+            return {
+              ...intervention,
+              equipmentName: equipment ? equipment.name : 'Équipement inconnu'
+            };
+          }
+          return intervention;
+        });
+        
+        setInterventions(parsedInterventions);
+      } catch (error) {
+        console.error("Error parsing interventions:", error);
+        setInterventions([]);
+      }
     } else {
       // Use mock data if no interventions in localStorage
       const mockInterventions: Intervention[] = [
@@ -322,7 +350,18 @@ const InterventionsPage = () => {
     }
     
     const now = new Date();
-    const startDate = new Date(intervention.startDate);
+    let startDate;
+    try {
+      startDate = typeof intervention.startDate === 'string' ? 
+        new Date(intervention.startDate) : intervention.startDate;
+      
+      if (isNaN(startDate.getTime())) {
+        return false;
+      }
+    } catch (error) {
+      console.error("Invalid date format:", intervention.startDate);
+      return false;
+    }
     
     return isBefore(startDate, now) && (intervention.status !== 'in-progress');
   };
@@ -331,6 +370,20 @@ const InterventionsPage = () => {
     toast.success("Fonctionnalité à venir", {
       description: "La création d'interventions sera disponible prochainement.",
     });
+  };
+
+  const safeFormatDate = (dateValue: string | Date | null, formatString: string): string => {
+    if (!dateValue) return "N/A";
+    
+    try {
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+      if (isNaN(date.getTime())) return "Invalid date";
+      
+      return format(date, formatString, { locale: fr });
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Error";
+    }
   };
 
   return (
@@ -479,12 +532,12 @@ const InterventionsPage = () => {
                     </td>
                     <td className="py-3 px-6">
                       <div className="text-sm">
-                        {format(new Date(intervention.startDate), 'dd/MM/yyyy', { locale: fr })}
+                        {safeFormatDate(intervention.startDate, 'dd/MM/yyyy')}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {format(new Date(intervention.startDate), 'HH:mm', { locale: fr })}
+                        {safeFormatDate(intervention.startDate, 'HH:mm')}
                         {intervention.endDate && (
-                          <> - {format(new Date(intervention.endDate), 'HH:mm', { locale: fr })}</>
+                          <> - {safeFormatDate(intervention.endDate, 'HH:mm')}</>
                         )}
                       </div>
                     </td>

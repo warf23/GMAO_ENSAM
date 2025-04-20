@@ -91,8 +91,19 @@ export const initializeMockData = () => {
     const equipment = generateMockEquipment();
     const interventions = generateMockInterventions(equipment);
     
-    localStorage.setItem('equipment', JSON.stringify(equipment));
-    localStorage.setItem('interventions', JSON.stringify(interventions));
+    // Make sure to store dates as ISO strings
+    localStorage.setItem('equipment', JSON.stringify(equipment, (key, value) => {
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    }));
+    localStorage.setItem('interventions', JSON.stringify(interventions, (key, value) => {
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    }));
     localStorage.setItem('mockDataInitialized', 'true');
   }
 };
@@ -105,8 +116,19 @@ export const setupMockDataUpdates = () => {
     const paretoCauses = generateParetoCauses();
     const performanceMetrics = generatePerformanceMetrics();
 
-    localStorage.setItem('equipment', JSON.stringify(equipment));
-    localStorage.setItem('interventions', JSON.stringify(interventions));
+    // Make sure to store dates as ISO strings
+    localStorage.setItem('equipment', JSON.stringify(equipment, (key, value) => {
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    }));
+    localStorage.setItem('interventions', JSON.stringify(interventions, (key, value) => {
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    }));
     localStorage.setItem('paretoCauses', JSON.stringify(paretoCauses));
     localStorage.setItem('performanceMetrics', JSON.stringify(performanceMetrics));
   };
