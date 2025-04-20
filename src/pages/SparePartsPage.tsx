@@ -1,200 +1,164 @@
 
-import { useState } from 'react';
-import { Package, Plus, Search, Filter, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from 'react';
+import { Box, Package, Plus, Search, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SparePartsFormDialog } from '@/components/spare-parts/SparePartsFormDialog';
-import { toast } from 'sonner';
-
-// Mock data for spare parts
-const mockSpareParts = [
-  {
-    id: "sp1",
-    reference: "BP-001",
-    name: "Roulement à billes",
-    description: "Roulement à billes SKF série 6200",
-    supplier: "SKF",
-    currentStock: 5,
-    minimumStock: 10,
-    unitPrice: 45.99,
-    location: "Magasin A-12",
-    category: "Roulements",
-    lastRestockDate: "2024-03-15",
-  },
-  {
-    id: "sp2",
-    reference: "JT-002",
-    name: "Joint torique",
-    description: "Joint torique en caoutchouc nitrile",
-    supplier: "Parker",
-    currentStock: 2,
-    minimumStock: 20,
-    unitPrice: 2.50,
-    location: "Magasin B-03",
-    category: "Joints",
-    lastRestockDate: "2024-03-10",
-  },
-  // Add more mock data as needed
-];
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
+import { toast } from "sonner";
+import type { SparePart } from '@/types/sparePart';
+import { getSparePartsFromStorage, deleteSparePart, initializeDataIfNeeded } from '@/utils/dataUtils';
 
 const SparePartsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [spareParts, setSpareParts] = useState(mockSpareParts);
+  const [spareParts, setSpareParts] = useState<SparePart[]>([]);
+  const [filteredParts, setFilteredParts] = useState<SparePart[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [partToDelete, setPartToDelete] = useState<string | null>(null);
 
-  const handleStockUpdate = (partId: string, quantity: number) => {
-    setSpareParts(currentParts => 
-      currentParts.map(part => 
-        part.id === partId 
-          ? { ...part, currentStock: part.currentStock + quantity }
-          : part
-      )
+  useEffect(() => {
+    // Initialize data if needed
+    initializeDataIfNeeded();
+    
+    // Load spare parts
+    const loadSpareParts = () => {
+      const parts = getSparePartsFromStorage();
+      setSpareParts(parts);
+      setFilteredParts(parts);
+    };
+    
+    loadSpareParts();
+    
+    // Set up refresh interval
+    const interval = setInterval(loadSpareParts, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const filtered = spareParts.filter(part => 
+      part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      part.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      part.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    toast.success("Stock mis à jour avec succès");
+    setFilteredParts(filtered);
+  }, [searchTerm, spareParts]);
+
+  const handleAddPart = (newPart: Omit<SparePart, 'id'>) => {
+    const id = `PDR${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+    const part = { ...newPart, id };
+    
+    const updatedParts = [...spareParts, part];
+    setSpareParts(updatedParts);
+    
+    // Save to localStorage
+    localStorage.setItem('spareParts', JSON.stringify(updatedParts));
+    
+    toast.success("Pièce détachée ajoutée avec succès");
+  };
+
+  const confirmDelete = (id: string) => {
+    setPartToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (partToDelete) {
+      deleteSparePart(partToDelete);
+      
+      // Update local state
+      const updatedParts = spareParts.filter(part => part.id !== partToDelete);
+      setSpareParts(updatedParts);
+      setFilteredParts(updatedParts.filter(part => 
+        part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        part.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        part.category.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+      
+      setDeleteDialogOpen(false);
+    }
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pièces détachées</h1>
-          <p className="text-muted-foreground">
-            Gérez votre inventaire de pièces détachées
-          </p>
-        </div>
-        <SparePartsFormDialog 
-          onSave={(newPart) => {
-            setSpareParts([...spareParts, { ...newPart, id: `sp${spareParts.length + 1}` }]);
-            toast.success("Pièce ajoutée avec succès");
-          }}
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <h1 className="text-2xl font-bold">Gestion des pièces détachées</h1>
+        <SparePartsFormDialog onSave={handleAddPart} />
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+        <Input
+          placeholder="Rechercher une pièce par nom, référence ou catégorie..."
+          className="pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Rechercher une pièce..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {filteredParts.length === 0 ? (
+        <div className="text-center py-8">
+          <Package className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+          <h3 className="mt-4 text-lg font-medium">Aucune pièce détachée trouvée</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {searchTerm ? "Essayez avec d'autres termes de recherche" : "Commencez par ajouter une pièce"}
+          </p>
         </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total des références</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{spareParts.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valeur du stock</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {spareParts.reduce((acc, part) => acc + (part.currentStock * part.unitPrice), 0).toLocaleString('fr-FR', {
-                style: 'currency',
-                currency: 'EUR'
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
+      ) : (
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Référence</TableHead>
                 <TableHead>Désignation</TableHead>
-                <TableHead>Stock actuel</TableHead>
-                <TableHead>Stock minimum</TableHead>
-                <TableHead>Emplacement</TableHead>
-                <TableHead>Prix unitaire</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Fournisseur</TableHead>
+                <TableHead className="text-center">Stock</TableHead>
+                <TableHead className="text-right">Prix unitaire</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {spareParts
-                .filter(part => 
-                  part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  part.reference.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((part) => (
-                  <TableRow key={part.id}>
-                    <TableCell>{part.reference}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{part.name}</div>
-                        <div className="text-sm text-muted-foreground">{part.supplier}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {part.currentStock}
-                        {part.currentStock <= part.minimumStock && (
-                          <Badge variant="destructive" className="gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            Stock bas
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{part.minimumStock}</TableCell>
-                    <TableCell>{part.location}</TableCell>
-                    <TableCell>
-                      {part.unitPrice.toLocaleString('fr-FR', {
-                        style: 'currency',
-                        currency: 'EUR'
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStockUpdate(part.id, 1)}
-                        >
-                          +
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStockUpdate(part.id, -1)}
-                          disabled={part.currentStock <= 0}
-                        >
-                          -
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {filteredParts.map((part) => (
+                <TableRow key={part.id}>
+                  <TableCell className="font-medium">{part.reference}</TableCell>
+                  <TableCell>
+                    {part.name}
+                    <p className="text-xs text-muted-foreground truncate max-w-xs">{part.description}</p>
+                  </TableCell>
+                  <TableCell>{part.category}</TableCell>
+                  <TableCell>{part.supplier}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={part.currentStock <= part.minimumStock ? "destructive" : "outline"}>
+                      {part.currentStock} / {part.minimumStock}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{part.unitPrice.toFixed(2)} €</TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => confirmDelete(part.id)}
+                    >
+                      <Trash size={16} className="text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Supprimer cette pièce"
+        description="Êtes-vous sûr de vouloir supprimer cette pièce détachée ? Cette action est irréversible."
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };
