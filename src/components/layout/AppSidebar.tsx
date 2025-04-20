@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Box, Package, Wrench, LayoutDashboard } from "lucide-react";
+import { 
+  BarChart3, Box, Calendar, Package, 
+  Settings, Wrench, X, ChevronDown, 
+  LayoutDashboard
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type SidebarItemProps = {
@@ -93,7 +97,9 @@ export const AppSidebar = () => {
         { title: "Maintenance préventive", path: "/maintenance/preventif" }
       ]
     },
-    { title: "Pièces détachées", icon: Package, path: "/pieces" }
+    { title: "Planning", icon: Calendar, path: "/calendrier" },
+    { title: "Pièces détachées", icon: Package, path: "/pieces" },
+    { title: "Indicateurs", icon: BarChart3, path: "/statistiques" }
   ];
 
   return (
