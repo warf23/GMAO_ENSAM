@@ -1,6 +1,6 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fr } from 'date-fns/locale';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -10,11 +10,10 @@ import {
   getDashboardStats
 } from '@/utils/dataUtils';
 import { ParetoChart } from '@/components/dashboard/ParetoChart';
-import { MaintenanceCalendar } from '@/components/dashboard/MaintenanceCalendar';
 import { IndicateurTable } from '@/components/dashboard/indicators/IndicateurTable';
 import { PdfDownloadButton } from '@/components/dashboard/PdfDownloadButton';
 import { StatsGrid } from '@/components/dashboard/StatsGrid';
-import { RecentInterventions } from '@/components/dashboard/RecentInterventions';
+import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 
 const calculateIndicators = (equipmentList, interventions) => {
   // For TRS, this is a placeholder since it requires production data.
@@ -50,7 +49,6 @@ const calculateIndicators = (equipmentList, interventions) => {
 };
 
 const Dashboard = () => {
-  const [tabValue, setTabValue] = useState("today");
   const [maintenanceEvents, setMaintenanceEvents] = useState([]);
   const [paretoData, setParetoData] = useState([]);
   const [metrics, setMetrics] = useState({});
@@ -103,106 +101,7 @@ const Dashboard = () => {
             <ParetoChart data={paretoData} title="" height={300} />
           </CardContent>
         </Card>
-        <Tabs defaultValue="today" onValueChange={setTabValue} className="space-y-8">
-          <TabsList className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <TabsTrigger value="today">Aujourd'hui</TabsTrigger>
-            <TabsTrigger value="week">Cette semaine</TabsTrigger>
-            <TabsTrigger value="month">Ce mois</TabsTrigger>
-          </TabsList>
-          <TabsContent value="today" className="space-y-8">
-            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <Card className="col-span-1 lg:col-span-2 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base font-semibold">Calendrier des interventions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <MaintenanceCalendar events={maintenanceEvents} />
-                </CardContent>
-              </Card>
-              <RecentInterventions maintenanceEvents={maintenanceEvents} />
-            </div>
-          </TabsContent>
-          <TabsContent value="week" className="space-y-8">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Interventions totales"
-                value={String(stats.totalInterventions)}
-                description={`${stats.preventiveInterventions} préventives, ${stats.correctiveInterventions} correctives`}
-                icon={Activity}
-                trend="up"
-                trendValue="+5 cette semaine"
-                iconClassName="bg-primary/10 text-primary"
-              />
-              <StatCard
-                title="En attente"
-                value={String(stats.plannedInterventions)}
-                description="Interventions planifiées"
-                icon={Clock}
-                trend="up"
-                trendValue="+2 cette semaine"
-                iconClassName="bg-warning/10 text-warning"
-              />
-              <StatCard
-                title="Equipements en panne"
-                value={String(stats.equipmentInBreakdown)}
-                description={`Sur ${stats.totalEquipment} équipements`}
-                icon={Settings}
-                trend="down"
-                trendValue="-3 cette semaine"
-                iconClassName="bg-destructive/10 text-destructive"
-              />
-              <StatCard
-                title="Stock critique"
-                value={String(stats.lowStockParts)}
-                description="Pièces sous le seuil"
-                icon={Package}
-                trend="neutral"
-                trendValue="inchangé"
-                iconClassName="bg-warning/10 text-warning"
-              />
-            </div>
-          </TabsContent>
-          <TabsContent value="month" className="space-y-8">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Interventions totales"
-                value={String(stats.totalInterventions)}
-                description={`${stats.preventiveInterventions} préventives, ${stats.correctiveInterventions} correctives`}
-                icon={Activity}
-                trend="down"
-                trendValue="-8 vs mois dernier"
-                iconClassName="bg-primary/10 text-primary"
-              />
-              <StatCard
-                title="En attente"
-                value={String(stats.plannedInterventions)}
-                description="Interventions planifiées"
-                icon={Clock}
-                trend="up"
-                trendValue="+3 ce mois"
-                iconClassName="bg-warning/10 text-warning"
-              />
-              <StatCard
-                title="Equipements en panne"
-                value={String(stats.equipmentInBreakdown)}
-                description={`Sur ${stats.totalEquipment} équipements`}
-                icon={Settings}
-                trend="down"
-                trendValue="-5 ce mois"
-                iconClassName="bg-destructive/10 text-destructive"
-              />
-              <StatCard
-                title="Stock critique"
-                value={String(stats.lowStockParts)}
-                description="Pièces sous le seuil"
-                icon={Package}
-                trend="down"
-                trendValue="-2 ce mois"
-                iconClassName="bg-warning/10 text-warning"
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+        <DashboardTabs stats={stats} maintenanceEvents={maintenanceEvents} />
       </div>
     </div>
   );
