@@ -31,7 +31,7 @@ const calculateIndicators = (equipmentList, interventions) => {
     // We'll fake operation time as: now - installed date / 24h
     const installDate = new Date(eq.installationDate || Date.now() - 90 * 24 * 60 * 60 * 1000);
     const now = new Date();
-    const hours = Math.max((now - installDate) / (1000 * 60 * 60), 1);
+    const hours = Math.max((now.getTime() - installDate.getTime()) / (1000 * 60 * 60), 1);
     const mtbf = failures.length > 0 ? (hours / failures.length).toFixed(1) : '-';
 
     // MTTR = Sum of repair durations / number of repairs (in hours)
