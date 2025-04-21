@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Box, Package, Wrench, LayoutDashboard } from "lucide-react";
+import { Box, Package, Wrench, LayoutDashboard, Settings, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type SidebarItemProps = {
