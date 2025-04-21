@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Activity, Clock, Package, Settings, Wrench } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -340,4 +339,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
