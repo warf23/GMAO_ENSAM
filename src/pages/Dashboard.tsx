@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { fr } from 'date-fns/locale';
@@ -11,7 +10,6 @@ import {
 } from '@/utils/dataUtils';
 import { ParetoChart } from '@/components/dashboard/ParetoChart';
 import { IndicateurTable } from '@/components/dashboard/indicators/IndicateurTable';
-import { PdfDownloadButton } from '@/components/dashboard/PdfDownloadButton';
 import { StatsGrid } from '@/components/dashboard/StatsGrid';
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 
@@ -87,7 +85,6 @@ const Dashboard = () => {
           <span className="text-sm text-muted-foreground">
             Dernière mise à jour: {formatDistanceToNow(new Date(), { addSuffix: true, locale: fr })}
           </span>
-          <PdfDownloadButton reportRef={reportRef} />
         </div>
       </div>
       <div ref={reportRef} className="space-y-8">
