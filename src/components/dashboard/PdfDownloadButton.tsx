@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { jsPDF } from "jspdf";
+import * as jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
 
@@ -12,14 +12,16 @@ type PdfDownloadButtonProps = {
 export function PdfDownloadButton({ reportRef }: PdfDownloadButtonProps) {
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
-    const doc = new jsPDF("p", "mm", "a4");
+    const doc = new jsPDF.jsPDF("p", "mm", "a4");
     // html2canvas scale prop is correct, but TS types are outdated, so override:
     const canvas = await html2canvas(reportRef.current as HTMLElement, { scale: 2, backgroundColor: "#fff" } as any);
     // getImageProperties isn't typed in older types, so we check and fallback
     const imgData = canvas.toDataURL("image/png");
-    const pdfWidth = 210, pdfHeight = 297;
-    let imgProps: { width: number, height: number; };
+    const pdfWidth = 210,
+      pdfHeight = 297;
+    let imgProps: { width: number; height: number };
     if ("getImageProperties" in doc) {
+      // Using any here to suppress typing issues with jsPDF older type declarations
       imgProps = (doc as any).getImageProperties(imgData);
     } else {
       // fallback
