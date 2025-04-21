@@ -1,4 +1,3 @@
-
 import { addDays, subDays } from 'date-fns';
 
 // Types
@@ -20,6 +19,8 @@ export type Intervention = {
   status: 'planned' | 'completed' | 'overdue';
   type: 'preventive' | 'corrective';
 };
+
+export type MaintenanceEvent = Intervention;
 
 export type ParetoItem = {
   name: string;
