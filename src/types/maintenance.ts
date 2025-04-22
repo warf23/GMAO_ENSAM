@@ -2,7 +2,7 @@
 export interface MaintenanceEvent {
   id: string;
   title: string;
-  date: string;
+  date: Date;
   equipmentId: string;
   equipmentName: string;
   type: 'preventive' | 'corrective';
