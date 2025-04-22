@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Activity, Calendar, Clock, Package, Settings, Wrench } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PdfDownloadButton } from '@/components/dashboard/PdfDownloadButton';
+import { MaintenanceEvent } from '@/types/maintenance';
 import { 
   initializeDataIfNeeded,
   getEquipmentFromStorage,

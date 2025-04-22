@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import * as jsPDF from 'jspdf';
+import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export const PdfDownloadButton = () => {
@@ -21,7 +21,7 @@ export const PdfDownloadButton = () => {
       });
 
       const canvas = await html2canvas(element);
-      const pdf = new jsPDF.jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF('p', 'mm', 'a4');
       
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
