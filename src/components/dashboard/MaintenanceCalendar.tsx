@@ -6,16 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { format, isSameDay, startOfToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
-type MaintenanceEvent = {
-  id: string;
-  title: string;
-  date: Date;
-  equipmentId: string;
-  equipmentName: string;
-  status: 'planned' | 'completed' | 'overdue';
-  type: 'preventive' | 'corrective';
-};
+import { MaintenanceEvent } from '@/types/maintenance';
 
 type MaintenanceCalendarProps = {
   events: MaintenanceEvent[];
@@ -25,7 +16,7 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(startOfToday());
   
   const getDateClassName = (date: Date) => {
-    const eventForDate = events.find(event => isSameDay(date, event.date));
+    const eventForDate = events.find(event => isSameDay(date, new Date(event.date)));
     
     if (!eventForDate) return '';
     
@@ -36,10 +27,35 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
   
   const getEventsForSelectedDate = () => {
     if (!selectedDate) return [];
-    return events.filter(event => isSameDay(event.date, selectedDate));
+    return events.filter(event => isSameDay(new Date(event.date), selectedDate));
   };
   
   const selectedEvents = getEventsForSelectedDate();
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'completed') {
+      return (
+        <Badge className="bg-success">
+          <CheckCircle size={14} className="mr-1" />
+          Terminé
+        </Badge>
+      );
+    }
+    if (status === 'planned' || status === 'in-progress') {
+      return (
+        <Badge className="bg-primary">
+          <Clock size={14} className="mr-1" />
+          {status === 'in-progress' ? 'En cours' : 'Planifié'}
+        </Badge>
+      );
+    }
+    return (
+      <Badge className="bg-destructive">
+        <AlertCircle size={14} className="mr-1" />
+        En retard
+      </Badge>
+    );
+  };
 
   return (
     <Card className="shadow-sm">
@@ -99,24 +115,7 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
                           {event.equipmentName}
                         </p>
                       </div>
-                      {event.status === 'completed' && (
-                        <Badge className="bg-success">
-                          <CheckCircle size={14} className="mr-1" />
-                          Terminé
-                        </Badge>
-                      )}
-                      {event.status === 'planned' && (
-                        <Badge className="bg-primary">
-                          <Clock size={14} className="mr-1" />
-                          Planifié
-                        </Badge>
-                      )}
-                      {event.status === 'overdue' && (
-                        <Badge className="bg-destructive">
-                          <AlertCircle size={14} className="mr-1" />
-                          En retard
-                        </Badge>
-                      )}
+                      {getStatusBadge(event.status)}
                     </div>
                   </div>
                 ))

@@ -2,13 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export const PdfDownloadButton = () => {
   const { toast } = useToast();
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     try {
       const element = document.getElementById('dashboard-content');
       if (!element) {
@@ -16,27 +14,21 @@ export const PdfDownloadButton = () => {
       }
 
       toast({
-        title: "Génération du PDF en cours...",
-        description: "Veuillez patienter un instant",
+        title: "Préparation de l'impression...",
+        description: "La page d'impression va s'ouvrir",
       });
 
-      const canvas = await html2canvas(element);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save('tableau-de-bord.pdf');
+      // Use browser's print functionality
+      window.print();
 
       toast({
-        title: "PDF généré avec succès",
-        description: "Le téléchargement devrait commencer automatiquement",
+        title: "Page d'impression ouverte",
+        description: "Vous pouvez maintenant enregistrer en PDF",
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur lors de la génération du PDF",
+        title: "Erreur lors de la préparation de l'impression",
         description: "Veuillez réessayer ultérieurement",
       });
     }
@@ -47,10 +39,10 @@ export const PdfDownloadButton = () => {
       onClick={handleDownload}
       variant="outline"
       size="sm"
-      className="gap-2"
+      className="gap-2 print:hidden"
     >
       <Download size={16} />
-      Télécharger en PDF
+      Imprimer / PDF
     </Button>
   );
 };

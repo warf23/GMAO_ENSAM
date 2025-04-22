@@ -24,6 +24,7 @@ export const RecentInterventions = ({ events }: RecentInterventionsProps) => {
             <div key={event.id} className="flex items-start space-x-3 pb-3 border-b last:border-b-0 last:pb-0">
               <div className={`h-9 w-9 rounded-full flex items-center justify-center ${
                 event.status === 'completed' ? 'bg-success/10 text-success' : 
+                event.status === 'in-progress' ? 'bg-primary/10 text-primary' :
                 event.status === 'overdue' ? 'bg-destructive/10 text-destructive' : 
                 'bg-primary/10 text-primary'
               }`}>

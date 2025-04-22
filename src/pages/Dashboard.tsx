@@ -46,13 +46,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center print:mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
         <PdfDownloadButton />
       </div>
       
-      <div id="dashboard-content">
-        <Tabs defaultValue="today" onValueChange={(value) => setTabValue(value as "today" | "week" | "month")}>
+      <div id="dashboard-content" className="print:space-y-8">
+        <Tabs defaultValue="today" onValueChange={(value) => setTabValue(value as "today" | "week" | "month")} className="print:hidden">
           <TabsList>
             <TabsTrigger value="today">Aujourd'hui</TabsTrigger>
             <TabsTrigger value="week">Cette semaine</TabsTrigger>
@@ -72,12 +72,17 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
         
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Always show the current tab content when printing */}
+        <div className="hidden print:block print:mb-8">
+          <DashboardStats stats={stats} period={tabValue} />
+        </div>
+        
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 print:gap-8">
           <MaintenanceCalendar events={maintenanceEvents} />
           <RecentInterventions events={maintenanceEvents} />
         </div>
         
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3 print:gap-8 print:mt-8">
           <div className="lg:col-span-2">
             <ParetoChart data={paretoData} title="Analyse Pareto des causes de pannes" height={300} />
           </div>
