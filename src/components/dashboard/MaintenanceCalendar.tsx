@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { format, isSameDay, startOfToday } from 'date-fns';
+import { CalendarDays, AlertCircle, CheckCircle, Clock, ChevronRight } from 'lucide-react';
+import { format, isSameDay, startOfToday, isToday, isPast, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { MaintenanceEvent } from '@/types/maintenance';
 
@@ -16,43 +16,58 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(startOfToday());
   
   const getDateClassName = (date: Date) => {
-    const eventForDate = events.find(event => isSameDay(date, new Date(event.date)));
+    const eventsForDate = events.filter(event => isSameDay(date, new Date(event.date)));
     
-    if (!eventForDate) return '';
+    if (eventsForDate.length === 0) return '';
     
-    if (eventForDate.status === 'overdue') return 'bg-destructive/10 text-destructive hover:bg-destructive/20';
-    if (eventForDate.status === 'completed') return 'bg-success/10 text-success hover:bg-success/20';
-    return 'bg-primary/10 text-primary hover:bg-primary/20';
+    const hasOverdue = eventsForDate.some(e => e.status === 'overdue');
+    const hasInProgress = eventsForDate.some(e => e.status === 'in-progress');
+    const allCompleted = eventsForDate.every(e => e.status === 'completed');
+    
+    if (hasOverdue) return 'bg-destructive/10 text-destructive hover:bg-destructive/20 font-bold';
+    if (hasInProgress) return 'bg-primary/10 text-primary hover:bg-primary/20 font-bold';
+    if (allCompleted) return 'bg-success/10 text-success hover:bg-success/20 font-bold';
+    return 'bg-primary/10 text-primary hover:bg-primary/20 font-bold';
   };
   
   const getEventsForSelectedDate = () => {
     if (!selectedDate) return [];
-    return events.filter(event => isSameDay(new Date(event.date), selectedDate));
+    return events
+      .filter(event => isSameDay(new Date(event.date), selectedDate))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
-  
+
   const selectedEvents = getEventsForSelectedDate();
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, date: Date) => {
     if (status === 'completed') {
       return (
-        <Badge className="bg-success">
+        <Badge className="bg-success/10 text-success hover:bg-success/20">
           <CheckCircle size={14} className="mr-1" />
           Terminé
         </Badge>
       );
     }
-    if (status === 'planned' || status === 'in-progress') {
+    if (status === 'in-progress') {
       return (
-        <Badge className="bg-primary">
+        <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
           <Clock size={14} className="mr-1" />
-          {status === 'in-progress' ? 'En cours' : 'Planifié'}
+          En cours
+        </Badge>
+      );
+    }
+    if (status === 'overdue' || (status === 'planned' && isPast(date) && !isToday(date))) {
+      return (
+        <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/20">
+          <AlertCircle size={14} className="mr-1" />
+          En retard
         </Badge>
       );
     }
     return (
-      <Badge className="bg-destructive">
-        <AlertCircle size={14} className="mr-1" />
-        En retard
+      <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
+        <Clock size={14} className="mr-1" />
+        Planifié
       </Badge>
     );
   };
@@ -60,16 +75,16 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <CalendarIcon size={20} />
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CalendarDays size={18} />
           Calendrier de maintenance
         </CardTitle>
         <CardDescription>
-          Visualisez et gérez vos interventions planifiées
+          {events.length} interventions planifiées
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <Calendar
               mode="single"
@@ -77,45 +92,55 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
               onSelect={setSelectedDate}
               locale={fr}
               className="rounded-md border"
-              modifiersClassNames={{
-                selected: "bg-primary text-primary-foreground",
+              classNames={{
+                day_today: "bg-muted font-bold",
               }}
               components={{
                 DayContent: ({ date }) => (
-                  <div className={`h-full w-full flex items-center justify-center ${getDateClassName(date)}`}>
+                  <div className={`h-full w-full flex items-center justify-center rounded-md ${getDateClassName(date)}`}>
                     {date.getDate()}
                   </div>
                 ),
               }}
             />
           </div>
-          <div className="flex-1 min-w-[250px]">
-            <h3 className="font-medium text-base mb-2">
+          <div className="flex-1 min-w-[280px]">
+            <h3 className="font-medium text-sm flex items-center gap-2 mb-3">
               {selectedDate ? (
-                `Événements du ${format(selectedDate, 'dd MMMM yyyy', { locale: fr })}`
+                <>
+                  <ChevronRight size={16} />
+                  Événements du {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
+                </>
               ) : (
                 'Sélectionnez une date'
               )}
             </h3>
-            <div className="space-y-3 mt-3">
+            <div className="space-y-3">
               {selectedEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Aucun événement ce jour</p>
               ) : (
                 selectedEvents.map(event => (
-                  <div key={event.id} className="rounded-md border p-3 text-sm">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-medium flex items-center gap-1">
-                          {event.title}
-                          <Badge variant={event.type === 'preventive' ? 'outline' : 'secondary'} className="ml-1">
-                            {event.type === 'preventive' ? 'Préventif' : 'Correctif'}
-                          </Badge>
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {event.equipmentName}
-                        </p>
+                  <div 
+                    key={event.id} 
+                    className="rounded-lg border p-3 text-sm hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="font-medium flex items-center gap-1">
+                            {event.title}
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {event.equipmentName}
+                          </p>
+                        </div>
+                        {getStatusBadge(event.status, new Date(event.date))}
                       </div>
-                      {getStatusBadge(event.status)}
+                      <div className="flex items-center gap-2">
+                        <Badge variant={event.type === 'preventive' ? 'outline' : 'secondary'} className="text-xs">
+                          {event.type === 'preventive' ? 'Préventif' : 'Correctif'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 ))
