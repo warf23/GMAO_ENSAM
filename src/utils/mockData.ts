@@ -16,8 +16,10 @@ export type Intervention = {
   date: Date;
   equipmentId: string;
   equipmentName: string;
-  status: 'planned' | 'completed' | 'overdue';
+  status: 'planned' | 'completed' | 'overdue' | 'in-progress' | 'scheduled' | 'canceled';
   type: 'preventive' | 'corrective';
+  technicians?: string[];
+  duration?: number;
 };
 
 export type MaintenanceEvent = Intervention;
@@ -45,7 +47,7 @@ export const generateMockEquipment = (count: number = 42): Equipment[] => {
 // Generate random interventions
 export const generateMockInterventions = (equipment: Equipment[]): Intervention[] => {
   const interventionTypes = ['Maintenance préventive', 'Remplacement', 'Réparation', 'Inspection'];
-  const statuses: Intervention['status'][] = ['planned', 'completed', 'overdue'];
+  const statuses: Intervention['status'][] = ['planned', 'completed', 'overdue', 'in-progress', 'scheduled', 'canceled'];
   const types: Intervention['type'][] = ['preventive', 'corrective'];
 
   return equipment.flatMap((eq) => {
@@ -58,6 +60,8 @@ export const generateMockInterventions = (equipment: Equipment[]): Intervention[
       equipmentName: eq.name,
       status: statuses[Math.floor(Math.random() * statuses.length)],
       type: types[Math.floor(Math.random() * types.length)],
+      technicians: Math.random() > 0.5 ? [Math.random().toString(36).substr(2, 5)] : undefined,
+      duration: Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 1 : undefined,
     }));
   });
 };

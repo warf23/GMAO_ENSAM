@@ -32,30 +32,30 @@ export const getMaintenanceEventsFromInterventions = (): MaintenanceEvent[] => {
       status = 'completed';
     } else if (intervention.status === 'in-progress') {
       status = 'in-progress';
-    } else if (intervention.status === 'scheduled') {
+    } else if (intervention.status === 'scheduled' || intervention.status === 'planned') {
       const now = new Date();
-      const startDate = new Date(intervention.startDate);
+      const startDate = new Date(intervention.date);
       
       if (startDate < now) {
         status = 'overdue';
       } else {
         status = 'planned';
       }
-    } else if (intervention.status === 'canceled') {
+    } else if (intervention.status === 'canceled' || intervention.status === 'overdue') {
       return null;
     }
     
     return {
       id: intervention.id,
       title: intervention.title,
-      date: new Date(intervention.startDate),
+      date: new Date(intervention.date),
       equipmentId: intervention.equipmentId,
       equipmentName: intervention.equipmentName || 'Équipement inconnu',
       type: intervention.type === 'preventive' ? 'preventive' : 'corrective',
       status: status,
-      description: intervention.description,
-      assignedTo: intervention.technicians ? intervention.technicians.join(', ') : undefined,
-      duration: intervention.duration
+      description: intervention.title,
+      assignedTo: Array.isArray(intervention.technicians) ? intervention.technicians.join(', ') : undefined,
+      duration: typeof intervention.duration === 'number' ? intervention.duration : undefined
     };
   }).filter(Boolean) as MaintenanceEvent[];
 };
