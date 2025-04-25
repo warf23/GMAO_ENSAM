@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { PdfDownloadButton } from '@/components/dashboard/PdfDownloadButton';
 import { MaintenanceCalendar } from '@/components/dashboard/MaintenanceCalendar';
 import { ParetoChart } from '@/components/dashboard/ParetoChart';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
@@ -10,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MaintenanceEvent } from '@/types/maintenance';
 import { 
   initializeDataIfNeeded,
-  getInterventionsFromStorage,
+  getMaintenanceEventsFromInterventions,
   getDashboardStats
 } from '@/utils/dataUtils';
 
@@ -25,11 +24,12 @@ const Dashboard = () => {
     initializeDataIfNeeded();
 
     const refreshData = () => {
-      const interventions = getInterventionsFromStorage();
+      // Use the new converter function to get maintenance events
+      const events = getMaintenanceEventsFromInterventions();
       const storedParetoCauses = JSON.parse(localStorage.getItem('paretoCauses') || '[]');
       const storedMetrics = JSON.parse(localStorage.getItem('performanceMetrics') || '{}');
       
-      setMaintenanceEvents(interventions);
+      setMaintenanceEvents(events);
       setParetoData(storedParetoCauses);
       setMetrics(storedMetrics);
       setStats(getDashboardStats());
@@ -37,6 +37,7 @@ const Dashboard = () => {
 
     refreshData();
     
+    // Set up refresh interval to check for changes
     const refreshInterval = setInterval(refreshData, 5000);
     
     return () => {
@@ -48,7 +49,6 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center print:mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
-        <PdfDownloadButton />
       </div>
       
       <div id="dashboard-content" className="print:space-y-8">

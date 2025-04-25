@@ -1,6 +1,6 @@
-
 import { toast } from "sonner";
 import { SparePart } from "@/types/sparePart";
+import { MaintenanceEvent } from "@/types/maintenance";
 import { Equipment, Intervention, generateMockEquipment, generateMockInterventions, generatePerformanceMetrics, generateParetoCauses } from "@/utils/mockData";
 
 // Helper to get data from localStorage with proper parsing for dates
@@ -10,7 +10,6 @@ export const getEquipmentFromStorage = (): Equipment[] => {
   
   try {
     return JSON.parse(data, (key, value) => {
-      // Convert ISO date strings back to Date objects for specific fields
       if (key === 'lastMaintenance' || key === 'nextMaintenance') {
         return new Date(value);
       }
@@ -22,13 +21,51 @@ export const getEquipmentFromStorage = (): Equipment[] => {
   }
 };
 
+// Convert interventions to maintenance events format for the dashboard
+export const getMaintenanceEventsFromInterventions = (): MaintenanceEvent[] => {
+  const interventions = getInterventionsFromStorage();
+  
+  return interventions.map(intervention => {
+    let status: 'planned' | 'in-progress' | 'completed' | 'overdue' = 'planned';
+    
+    if (intervention.status === 'completed') {
+      status = 'completed';
+    } else if (intervention.status === 'in-progress') {
+      status = 'in-progress';
+    } else if (intervention.status === 'scheduled') {
+      const now = new Date();
+      const startDate = new Date(intervention.startDate);
+      
+      if (startDate < now) {
+        status = 'overdue';
+      } else {
+        status = 'planned';
+      }
+    } else if (intervention.status === 'canceled') {
+      return null;
+    }
+    
+    return {
+      id: intervention.id,
+      title: intervention.title,
+      date: new Date(intervention.startDate),
+      equipmentId: intervention.equipmentId,
+      equipmentName: intervention.equipmentName || 'Équipement inconnu',
+      type: intervention.type === 'preventive' ? 'preventive' : 'corrective',
+      status: status,
+      description: intervention.description,
+      assignedTo: intervention.technicians ? intervention.technicians.join(', ') : undefined,
+      duration: intervention.duration
+    };
+  }).filter(Boolean) as MaintenanceEvent[];
+};
+
 export const getInterventionsFromStorage = (): Intervention[] => {
   const data = localStorage.getItem('interventions');
   if (!data) return [];
   
   try {
     return JSON.parse(data, (key, value) => {
-      // Convert ISO date strings back to Date objects
       if (key === 'date') {
         return new Date(value);
       }
@@ -57,21 +94,15 @@ export const deleteEquipment = (id: string): void => {
   const equipment = getEquipmentFromStorage();
   const interventions = getInterventionsFromStorage();
   
-  // Filter out the equipment to delete
   const updatedEquipment = equipment.filter(eq => eq.id !== id);
-  
-  // Also remove related interventions
   const updatedInterventions = interventions.filter(int => int.equipmentId !== id);
   
-  // Save back to localStorage
   localStorage.setItem('equipment', JSON.stringify(updatedEquipment));
   localStorage.setItem('interventions', JSON.stringify(updatedInterventions));
   
-  // Update performance metrics based on new data
   const metrics = generatePerformanceMetrics();
   localStorage.setItem('performanceMetrics', JSON.stringify(metrics));
   
-  // Update Pareto causes based on new data
   const paretoCauses = generateParetoCauses();
   localStorage.setItem('paretoCauses', JSON.stringify(paretoCauses));
   
@@ -84,7 +115,6 @@ export const deleteIntervention = (id: string): void => {
   
   localStorage.setItem('interventions', JSON.stringify(updatedInterventions));
   
-  // Update metrics after deletion
   const metrics = generatePerformanceMetrics();
   localStorage.setItem('performanceMetrics', JSON.stringify(metrics));
   
@@ -124,7 +154,6 @@ export const initializeDataIfNeeded = (): void => {
   }
   
   if (!localStorage.getItem('spareParts') || JSON.parse(localStorage.getItem('spareParts') || '[]').length === 0) {
-    // Create some initial spare parts if none exist
     const initialSpareParts: SparePart[] = [
       {
         id: "PDR001",
@@ -170,7 +199,6 @@ export const initializeDataIfNeeded = (): void => {
     localStorage.setItem('spareParts', JSON.stringify(initialSpareParts));
   }
   
-  // Make sure performance metrics and Pareto causes are initialized
   if (!localStorage.getItem('performanceMetrics')) {
     const metrics = generatePerformanceMetrics();
     localStorage.setItem('performanceMetrics', JSON.stringify(metrics));
