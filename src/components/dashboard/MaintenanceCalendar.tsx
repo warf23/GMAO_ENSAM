@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,6 +6,8 @@ import { CalendarDays, AlertCircle, CheckCircle, Clock, ChevronRight } from 'luc
 import { format, isSameDay, startOfToday, isToday, isPast, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { MaintenanceEvent } from '@/types/maintenance';
+import { DayPicker } from '../../components/ui/day-picker';
+import { cn } from '@/lib/utils';
 
 type MaintenanceCalendarProps = {
   events: MaintenanceEvent[];
@@ -73,82 +74,74 @@ export const MaintenanceCalendar = ({ events }: MaintenanceCalendarProps) => {
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <CalendarDays size={18} />
-          Calendrier de maintenance
-        </CardTitle>
-        <CardDescription>
-          {events.length} interventions planifiées
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              locale={fr}
-              className="rounded-md border"
-              classNames={{
-                day_today: "bg-muted font-bold",
-              }}
-              components={{
-                DayContent: ({ date }) => (
-                  <div className={`h-full w-full flex items-center justify-center rounded-md ${getDateClassName(date)}`}>
-                    {date.getDate()}
-                  </div>
-                ),
-              }}
-            />
-          </div>
-          <div className="flex-1 min-w-[280px]">
-            <h3 className="font-medium text-sm flex items-center gap-2 mb-3">
-              {selectedDate ? (
-                <>
-                  <ChevronRight size={16} />
-                  Événements du {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
-                </>
-              ) : (
-                'Sélectionnez une date'
-              )}
-            </h3>
-            <div className="space-y-3">
-              {selectedEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun événement ce jour</p>
-              ) : (
-                selectedEvents.map(event => (
-                  <div 
-                    key={event.id} 
-                    className="rounded-lg border p-3 text-sm hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="font-medium flex items-center gap-1">
-                            {event.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {event.equipmentName}
-                          </p>
-                        </div>
-                        {getStatusBadge(event.status, new Date(event.date))}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={event.type === 'preventive' ? 'outline' : 'secondary'} className="text-xs">
-                          {event.type === 'preventive' ? 'Préventif' : 'Correctif'}
-                        </Badge>
-                      </div>
+    <div className="rounded-lg border bg-card shadow-sm" data-chart="calendar">
+      <div className="flex flex-col space-y-3 p-4">
+        <h3 className="text-lg font-medium">Calendrier de maintenance</h3>
+        <div className="overflow-hidden rounded-md border">
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            modifiers={{ 
+              event: events.filter(event => event.date).map(event => new Date(event.date))
+            }}
+            modifiersStyles={{
+              event: {
+                fontWeight: 'bold',
+                color: 'white',
+                backgroundColor: '#007BFF',
+                borderRadius: '50%',
+              }
+            }}
+            showOutsideDays
+            className="p-3"
+            footer={selectedDate ? (
+              <p className="py-2 text-sm text-center text-muted-foreground">
+                Événements du {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
+              </p>
+            ) : null}
+          />
+        </div>
+      </div>
+      
+      {selectedEvents.length > 0 && (
+        <div className="border-t p-4">
+          <div className="space-y-4">
+            {selectedEvents.map(event => (
+              <div 
+                key={event.id} 
+                className="flex items-start space-x-3"
+              >
+                <div className={cn(
+                  "mt-0.5 h-4 w-4 rounded-full", 
+                  event.type === 'preventive' ? 'bg-blue-500' : 'bg-amber-500'
+                )} />
+                <div className="space-y-1 flex-1">
+                  <div className="flex justify-between items-start">
+                    <p className="text-sm font-medium leading-none">{event.title}</p>
+                    <div className={cn(
+                      "text-xs font-medium rounded-full px-2 py-0.5", 
+                      getDateClassName(new Date(event.date))
+                    )}>
+                      {getStatusBadge(event.status, new Date(event.date))}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                  {event.technicians && (
+                    <p className="text-xs text-muted-foreground">
+                      Technicien{event.technicians.length > 1 ? 's' : ''}: {event.technicians.join(', ')}
+                    </p>
+                  )}
+                  {event.duration && (
+                    <p className="text-xs text-muted-foreground">
+                      Durée estimée: {event.duration} heure{event.duration > 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };

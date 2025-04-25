@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import {
   BarChart,
@@ -51,7 +50,7 @@ export const ParetoChart = ({ data, title, height = 300 }: ParetoChartProps) => 
   }, [data]);
 
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
+    <div className="rounded-lg border bg-card p-4 shadow-sm" data-chart="pareto">
       <h3 className="text-lg font-medium mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart

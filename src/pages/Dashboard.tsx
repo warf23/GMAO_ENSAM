@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { MaintenanceCalendar } from '@/components/dashboard/MaintenanceCalendar';
 import { ParetoChart } from '@/components/dashboard/ParetoChart';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RecentInterventions } from '@/components/dashboard/RecentInterventions';
 import { PerformanceMetrics } from '@/components/dashboard/PerformanceMetrics';
+import { PdfDownloadButton } from '@/components/dashboard/PdfDownloadButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MaintenanceEvent } from '@/types/maintenance';
 import { 
@@ -49,6 +49,11 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center print:mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
+        <PdfDownloadButton 
+          stats={stats} 
+          metrics={metrics} 
+          period={tabValue} 
+        />
       </div>
       
       <div id="dashboard-content" className="print:space-y-8">

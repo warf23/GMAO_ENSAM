@@ -1,4 +1,3 @@
-
 export interface MaintenanceEvent {
   id: string;
   title: string;
@@ -10,4 +9,5 @@ export interface MaintenanceEvent {
   description?: string;
   assignedTo?: string;
   duration?: number;
+  technicians?: string[];
 }

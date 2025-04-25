@@ -1,4 +1,3 @@
-
 import { PerformanceIndicator } from './PerformanceIndicator';
 
 type PerformanceMetricsProps = {
@@ -11,7 +10,7 @@ type PerformanceMetricsProps = {
 
 export const PerformanceMetrics = ({ metrics }: PerformanceMetricsProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-chart="performance">
       <PerformanceIndicator 
         title="TRS (Taux de rendement synthétique)" 
         value={metrics.trs || 0} 
