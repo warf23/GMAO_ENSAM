@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,7 @@ import InterventionsPage from "./pages/InterventionsPage";
 import InterventionDetailPage from "./pages/InterventionDetailPage";
 import SparePartsPage from "./pages/SparePartsPage";
 import NotFound from "./pages/NotFound";
+import EquipmentFichesPage from "./pages/EquipmentFichesPage";
 import { useEffect } from "react";
 import { initializeDataIfNeeded } from "@/utils/dataUtils";
 
@@ -33,6 +33,7 @@ const App = () => {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/equipements" element={<EquipmentListPage />} />
+              <Route path="/equipements/fiches" element={<EquipmentFichesPage />} />
               <Route path="/equipements/:id" element={<EquipmentDetailPage />} />
               <Route path="/maintenance/interventions" element={<InterventionsPage />} />
               <Route path="/maintenance/interventions/:id" element={<InterventionDetailPage />} />

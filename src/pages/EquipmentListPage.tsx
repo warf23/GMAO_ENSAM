@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   AlertCircle, ArrowUpDown, CheckCircle, ChevronsUpDown, 
@@ -8,41 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-// Type for equipment list
-type Equipment = {
-  id: string;
-  name: string;
-  location: string;
-  status: 'operational' | 'maintenance' | 'breakdown' | 'standby';
-  type: string;
-  serialNumber: string;
-  criticalityLevel: 'low' | 'medium' | 'high';
-};
+import { equipmentData, Equipment } from '@/data/equipmentData';
 import { EquipmentFormDialog } from '@/components/equipment/EquipmentFormDialog';
 
 const EquipmentListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [equipments, setEquipments] = useState<Equipment[]>([]);
   
-  // Load equipment from localStorage
-  const loadEquipment = () => {
-    try {
-      const storedEquipment = localStorage.getItem('equipment');
-      if (storedEquipment) {
-        setEquipments(JSON.parse(storedEquipment));
-      }
-    } catch (error) {
-      console.error('Error loading equipment from localStorage:', error);
-    }
-  };
-  
-  // Load equipment on component mount
-  useEffect(() => {
-    loadEquipment();
-  }, []);
-  
-  const filteredEquipments = equipments.filter((equipment) => 
+  const filteredEquipments = equipmentData.filter((equipment) => 
     equipment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     equipment.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     equipment.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -112,7 +84,7 @@ const EquipmentListPage = () => {
             <Filter className="mr-2 h-4 w-4" />
             Filtres
           </Button>
-          <EquipmentFormDialog onEquipmentAdded={loadEquipment} />
+          <EquipmentFormDialog />
         </div>
       </div>
       
@@ -174,7 +146,7 @@ const EquipmentListPage = () => {
                           <Button variant="ghost" size="icon">
                             <Wrench className="h-4 w-4" />
                           </Button>
-                          <EquipmentFormDialog equipment={equipment} onEquipmentAdded={loadEquipment} />
+                          <EquipmentFormDialog equipment={equipment} />
                         </div>
                       </td>
                     </tr>

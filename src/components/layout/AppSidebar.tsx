@@ -111,7 +111,7 @@ export const AppSidebar = () => {
     >
       <div className="flex h-14 items-center border-b border-sidebar-border px-3">
         {!isCollapsed && (
-          <h2 className="flex-1 font-semibold text-xl text-primary">MainFlow</h2>
+          <h2 className="flex-1 font-semibold text-l text-primary">GMAO ENSAM Casa</h2>
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
