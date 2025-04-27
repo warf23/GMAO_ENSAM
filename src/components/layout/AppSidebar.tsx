@@ -93,13 +93,10 @@ export const AppSidebar = () => {
       path: "/maintenance",
       hasSubItems: true,
       subItems: [
-        { title: "Interventions correctives", path: "/maintenance/interventions" },
-        { title: "Maintenance préventive", path: "/maintenance/preventif" }
+        { title: "Interventions correctives", path: "/maintenance/interventions" }
       ]
     },
-    { title: "Planning", icon: Calendar, path: "/calendrier" },
-    { title: "Pièces détachées", icon: Package, path: "/pieces" },
-    { title: "Indicateurs", icon: BarChart3, path: "/statistiques" }
+    { title: "Pièces détachées", icon: Package, path: "/pieces" }
   ];
 
   return (
